@@ -17,7 +17,7 @@ func main() {
 	// define the server
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: cfg.routes(),
+		Handler: cfg.Routes(),
 	}
 
 	// start the server

@@ -1,5 +1,5 @@
 # base go image :: Multi stage docker build
-FROM golang:1.18-alpine as builder
+FROM golang:1.18-alpine AS builder
 
 RUN mkdir /app
 
