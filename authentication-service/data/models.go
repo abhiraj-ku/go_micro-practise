@@ -3,7 +3,10 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const dbTimeoutinSec = 3 * time.Second
@@ -30,6 +33,81 @@ func New(dbPool *sql.DB) Models {
 	return Models{
 		User: User{},
 	}
+}
+
+// func Insert() -> inserts single user's data in the db
+func (u *User) Insert(user User) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeoutinSec)
+	defer cancel()
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+	if err != nil {
+		return 0, err
+	}
+	var insertedID int
+
+	stmt := `insert into users(email,first_name,last_name,password, user_active,created_at,updated_at)
+	values($1,$2,$3,$4,$5,$6,$7) returning id`
+
+	err = db.QueryRowContext(ctx, stmt,
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		hashedPassword,
+		user.Active,
+		time.Now(),
+		time.Now(),
+	).Scan(&insertedID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return insertedID, nil
+
+}
+
+// func Update() -> updates one user's details in db
+func (u *User) Update() error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeoutinSec)
+	defer cancel()
+
+	// this time we are writing to db so we need a statement to execute
+	stmt := `update users set 
+	email= $1,
+	first_name = $2,
+	last_name = $3,
+	user_active = $4,
+	updated_at = $5
+	where id = $6
+	`
+	_, err := db.ExecContext(ctx, stmt,
+		u.Email,
+		u.FirstName,
+		u.LastName,
+		u.Active,
+		time.Now(),
+		u.ID,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// func DeleteById() -> delete user based on user ID
+func (u *User) DeleteById(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeoutinSec)
+	defer cancel()
+
+	stmt := `delete from user where id=$1`
+
+	_, err := db.ExecContext(ctx, stmt, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // func GetAll -> returns slice of users sorted by last LastName
@@ -126,7 +204,36 @@ func (u *User) GetById(id string) (*User, error) {
 
 }
 
-// func Update() -> updates one user's details in db
-func (u *User) Update() {
+// ResetPassword is the method we will use to change a user's password.
+func (u *User) ResetPassword(password string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeoutinSec)
+	defer cancel()
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return err
+	}
+
+	stmt := `update users set password = $1 where id = $2`
+	_, err = db.ExecContext(ctx, stmt, hashedPassword, u.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *User) PasswordMatches(plainText string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(plainText))
+	if err != nil {
+		switch {
+		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+			// invalid password
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+
+	return true, nil
 }
