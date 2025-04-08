@@ -3,16 +3,22 @@ package main
 import (
 	"auth_service/data"
 	"database/sql"
-	"fmt"
+	"log"
 )
 
 const webPort = "9090"
 
 type Config struct {
 	DB     *sql.DB
-	Models data.Models
+	Models data.UserModel
 }
 
 func main() {
-	fmt.Println("Hello, world!")
+	db, err := sql.Open("postgres", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// models := data.NewModels(db)
 }
