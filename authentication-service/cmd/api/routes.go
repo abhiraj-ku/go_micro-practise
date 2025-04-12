@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func (m *Config) Routes() http.Handler {
+func (app *Config) Routes() http.Handler {
 	mux := chi.NewRouter()
 
 	// User cors to allow * everyone as of Now
@@ -21,7 +21,9 @@ func (m *Config) Routes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	mux.Use(middleware.Heartbeat("ping"))
+	mux.Use(middleware.Heartbeat("/ping"))
 
+	// auth POST Routes
+	mux.Post("/authenticate", app.Authenticate)
 	return mux
 }
