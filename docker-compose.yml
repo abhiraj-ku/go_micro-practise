@@ -9,3 +9,29 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+
+  authentication_service:
+    build:
+      context: ./authentication-service
+      dockerfile: Dockerfile
+      restart: always
+      ports:
+        - "8081:80"
+      deploy:
+        mode: replicated
+        replicas: 1
+
+  postgres:
+    image: "postgres:14.0"
+    ports:
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 3
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASS: password
+      POSTGRES_DB: users
+    volumes:
+      - ./db-data/pg:/var/lib/postgresql/data/
