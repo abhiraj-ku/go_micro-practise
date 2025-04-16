@@ -41,3 +41,5 @@ func (app *Config) SendMail(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusAccepted, payload)
 
 }
+
+// todo: sendgrid mail integration
