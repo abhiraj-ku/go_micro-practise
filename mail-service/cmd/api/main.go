@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 const (
@@ -37,7 +38,7 @@ func main() {
 }
 
 func createMail() Mail {
-	port := os.Getenv("MAILER_PORT")
+	port, _ := strconv.Atoi(os.Getenv("MAILER_PORT"))
 	m := Mail{
 		Domain:     os.Getenv("MAIL_DOMAIN"),
 		Host:       os.Getenv("MAIL_HOST"),
@@ -45,7 +46,7 @@ func createMail() Mail {
 		Username:   os.Getenv("MAIL_USERNAME"),
 		Password:   os.Getenv("MAIL_PASSWORD"),
 		Encryption: os.Getenv("MAIL_ENCRYPTION"),
-		From:       os.Getenv("MAIL_FROM"),
+		FromAddr:   os.Getenv("MAIL_FROM"),
 		FromName:   os.Getenv("FROM_ADDRESS"),
 	}
 	return m

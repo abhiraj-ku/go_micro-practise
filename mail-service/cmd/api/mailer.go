@@ -5,13 +5,14 @@ import (
 	"html/template"
 	"time"
 
+	"github.com/vanng822/go-premailer/premailer"
 	mail "github.com/xhit/go-simple-mail/v2"
 )
 
 type Mail struct {
 	Domain     string
 	Host       string
-	Port       string
+	Port       int
 	Username   string
 	Password   string
 	Encryption string
@@ -74,7 +75,7 @@ func (m *Mail) SendMessageSMTP(msg Message) error {
 	email.SetSubject(msg.Subject)
 	email.AddTo(msg.To)
 	email.SetBody(mail.TextPlain, plainMessage)
-	email.AddAlternative(mail.TextHTML, formattedMessage)
+	email.AddAlternative(mail.TextHTML, sendToTemplate)
 
 	if len(msg.Attachments) > 0 {
 		for _, attachement := range msg.Attachments {
@@ -88,7 +89,7 @@ func (m *Mail) SendMessageSMTP(msg Message) error {
 	return nil
 }
 
-func getEncryption(s string) mail.Encryption {
+func (m *Mail) getEncryption(s string) mail.Encryption {
 	switch s {
 	case "tls":
 		return mail.EncryptionSTARTTLS
@@ -116,4 +117,44 @@ func (m *Mail) buildPlainTextMessage(msg Message) (string, error) {
 
 	plainMessage := tmpl.String()
 	return plainMessage, nil
+}
+func (m *Mail) buildHTMLMessage(msg Message) (string, error) {
+	templateToRender := "./templates/mail.html.gohtml"
+
+	t, err := template.New("email-html").ParseFiles(templateToRender)
+	if err != nil {
+		return "", err
+	}
+
+	var tpl bytes.Buffer
+	if err := t.ExecuteTemplate(&tpl, "body", msg.DataMap); err != nil {
+		return "", err
+	}
+
+	formattedMessage := tpl.String()
+	formattedMessage, err = m.inlineCSS(formattedMessage)
+	if err != nil {
+		return "", err
+	}
+	return formattedMessage, nil
+}
+
+func (m *Mail) inlineCSS(content string) (string, error) {
+	options := premailer.Options{
+		RemoveClasses:     false,
+		CssToAttributes:   false,
+		KeepBangImportant: true,
+	}
+
+	prem, err := premailer.NewPremailerFromString(content, &options)
+	if err != nil {
+		return "", err
+	}
+
+	html, err := prem.Transform()
+	if err != nil {
+		return "", err
+	}
+
+	return html, err
 }
