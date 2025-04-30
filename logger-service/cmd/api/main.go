@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"net/http"
 	"time"
 
+	"github.com/abhiraj-ku/go_micro-practise/data"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -20,7 +22,9 @@ const (
 
 var client *mongo.Client
 
-type Config struct{}
+type Config struct {
+	Models data.Models
+}
 
 func main() {
 	mongoClient, err := connectToMongo()
@@ -39,6 +43,19 @@ func main() {
 		}
 	}()
 
+	app := Config{
+		Models: data.New(client),
+	}
+
+	log.Println("starting logger server on port", webPort)
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%s", webPort),
+		Handler: app.routes(),
+	}
+	err = srv.ListenAndServe()
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func connectToMongo() (*mongo.Client, error) {
