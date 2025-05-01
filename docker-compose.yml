@@ -1,5 +1,5 @@
 services:
-  broker-services:
+  broker-service:
     build:
       context: ./broker-service
       dockerfile: Dockerfile
@@ -14,12 +14,12 @@ services:
     build:
       context: ./authentication-service
       dockerfile: Dockerfile
-      restart: always
-      ports:
-        - "8081:80"
-      deploy:
-        mode: replicated
-        replicas: 1
+    restart: always
+    ports:
+      - "8082:80"
+    deploy:
+      mode: replicated
+      replicas: 1
 
   mail-service:
     build:
@@ -27,7 +27,15 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "8083:80"
+      - "8084:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+  logger-service:
+    build:
+      context: ./logger-service
+      dockerfile: Dockerfile
+    restart: always
     deploy:
       mode: replicated
       replicas: 1
@@ -39,10 +47,21 @@ services:
     restart: always
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1 # Usually only 1 for stateful DB unless using Patroni or similar
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASS: password
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: users
     volumes:
       - ./db-data/pg:/var/lib/postgresql/data/
+
+  mongo:
+    image: "mongo:4.2.16-bionic"
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: logs
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - ./db-data/mongo:/data/db
