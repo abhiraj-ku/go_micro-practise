@@ -31,6 +31,7 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+
   logger-service:
     build:
       context: ./logger-service
