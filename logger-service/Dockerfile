@@ -1,4 +1,4 @@
-FROM go:alpine1-22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 RUN mkdir /app
 
@@ -16,4 +16,4 @@ RUN mkdir /app
 
 COPY --from=builder /app/logger-service /app
 
-CMD["/app/logger-service"]
+CMD ["/app/logger-service"]

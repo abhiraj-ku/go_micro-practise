@@ -16,5 +16,6 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/mail-service /app
+COPY templates /templates
 
 CMD["/app/mail-service"]

@@ -84,7 +84,7 @@ func (app *Config) SendMailViaSendGrid(w http.ResponseWriter, r *http.Request) {
 }
 
 func SendEmailWithSendGrid(toEmail, toName, mailSubject, propertyName, propertyLocation string) error {
-	from := mail.NewEmail("Enquiry Manager", "anand.japan896@icloud.com")
+	from := mail.NewEmail("Enquiry Manager", "abhishekdreams@high.com")
 	subject := mailSubject
 	to := mail.NewEmail(toName, toEmail)
 	plainTextContent := "and easy to do anywhere, even with Go"
