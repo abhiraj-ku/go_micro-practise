@@ -47,7 +47,7 @@ func connectMq() (*amqp.Connection, error) {
 		}
 
 		// add some jitterance for better connection
-		jitter := time.Duration(rand.int63n(int64(backOffTime)))
+		jitter := time.Duration(int64((backOffTime)))
 		backOffTime = time.Duration(math.Min(float64(maxBackOffTime), float64(backOffTime*2)))
 		log.Printf("backing off for %v seconds (with jitter)...", backOffTime+jitter)
 		time.Sleep(backOffTime + jitter)
