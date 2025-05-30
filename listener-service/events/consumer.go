@@ -44,7 +44,7 @@ type Payload struct {
 	Data string `json:"data"`
 }
 
-func (c *Consumer) listen(topics []string) error {
+func (c *Consumer) Listen(topics []string) error {
 	ch, err := c.conn.Channel()
 	if err != nil {
 		return err
@@ -65,10 +65,10 @@ func (c *Consumer) listen(topics []string) error {
 			false,
 			nil,
 		)
-		if err != nil {
-			return err
+		// if err != nil {
+		// 	return err
 
-		}
+		// }
 	}
 	// consume things
 	messages, err := ch.Consume(q.Name, "", true, false, false, false, nil)

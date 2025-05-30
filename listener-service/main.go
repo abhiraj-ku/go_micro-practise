@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/abhiraj-ku/go_micro-practise/events"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -21,10 +22,19 @@ func main() {
 	log.Println("Connected to rabbitMQ")
 
 	// start listening from messages
+	log.Println("Listening for messages from rabbitmq")
 
 	// create consumers for the messages
+	consumer, err := events.NewConsumer(rabbitConn)
+	if err != nil {
+		panic(err)
+	}
 
 	// watch the queue and consume events
+	err = consumer.Listen([]string{"log.INFO", "log.WARNING", "log.ERROR"})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func connectMq() (*amqp.Connection, error) {
@@ -33,7 +43,7 @@ func connectMq() (*amqp.Connection, error) {
 	maxBackOffTime := 30 * time.Second
 
 	for {
-		conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+		conn, err := amqp.Dial("amqp://guest:guest@rabbitmq")
 		if err != nil {
 			log.Printf("RabbitMQ not yet ready... %v", err)
 			count++
