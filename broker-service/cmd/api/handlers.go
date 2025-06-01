@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/abhiraj-ku/go_micro-practise/events"
 )
 
 type RequestPayloadFormat struct {
@@ -52,7 +54,7 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	case "auth":
 		app.authenticate(w, requestPayload.Auth)
 	case "log":
-		app.logItem(w, requestPayload.Log)
+		app.logEventViaRabbit(w, requestPayload.Log)
 
 	default:
 		app.ErrorJSON(w, errors.New("unknown action"))
@@ -170,4 +172,37 @@ func (app *Config) logItem(w http.ResponseWriter, entry LogPayload) {
 
 	app.WriteJson(w, http.StatusAccepted, payload)
 
+}
+
+func (app *Config) logEventViaRabbit(w http.ResponseWriter, l LogPayload) {
+	err := app.pushToQueue(l.Name, l.Data)
+	if err != nil {
+		app.ErrorJSON(w, err)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = false
+	payload.Message = "lpgged via rabbit mq"
+
+	app.WriteJson(w, http.StatusAccepted, payload)
+}
+
+func (app *Config) pushToQueue(name, msg string) error {
+	emitter, err := events.NewEmitter(app.Rabbitmq)
+	if err != nil {
+		return err
+	}
+	payload := LogPayload{
+		Name: name,
+		Data: msg,
+	}
+
+	jsonData, _ := json.MarshalIndent(&payload, "", "\t")
+	err = emitter.Push(string(jsonData), "log.INFO")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
