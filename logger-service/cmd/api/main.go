@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/rpc"
 	"time"
 
 	"github.com/abhiraj-ku/go_micro-practise/data"
@@ -47,6 +49,11 @@ func main() {
 		Models: data.New(client),
 	}
 
+	// start the RPC server
+	err = rpc.Register(new(RPCServer))
+	go app.serveRPC()
+
+	// start the Logger server microservice
 	log.Println("starting logger server on port", webPort)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
@@ -55,6 +62,26 @@ func main() {
 	err = srv.ListenAndServe()
 	if err != nil {
 		log.Panic(err)
+	}
+}
+
+// func to connect to RPC Server
+func (app *Config) serveRPC() error {
+	log.Println("starting the rpc server on port: " + rpcPort)
+
+	listen, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", rpcPort))
+	if err != nil {
+		return err
+	}
+	defer listen.Close()
+
+	for {
+		rpcConn, err := listen.Accept()
+		if err != nil {
+			continue
+		}
+
+		go rpc.ServeConn(rpcConn)
 	}
 }
 
