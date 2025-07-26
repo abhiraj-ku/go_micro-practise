@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/abhiraj-ku/go_micro-practise/events"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -39,9 +40,20 @@ func main() {
 		os.Exit(1)
 	}
 	defer rabbitConn.Close()
-	log.Println("Connected to rabbitMQ")
-	app := Config{
+	cfg = Config{
 		Rabbitmq: rabbitConn,
+	}
+
+	// connect consumer
+	consumer, err := events.NewConsumer(rabbitConn)
+	if err != nil {
+		panic(err)
+	}
+
+	//Watch the queyes and consume the events
+	err = consumer.Listen([]string{"log.Info", "log.Warning", "log.Error"})
+	if err != nil {
+		panic(err)
 	}
 
 	// define the server
@@ -58,7 +70,6 @@ func main() {
 }
 
 // connect to rabbit RabbitMQ
-
 func connectMq() (*amqp.Connection, error) {
 	var count int64
 	var backOffTime = 2 * time.Second

@@ -36,11 +36,11 @@ func (app *Config) SendMail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message := MailMessage{
+	message := Message{
 		From:    msgRequest.From,
 		To:      msgRequest.To,
 		Subject: msgRequest.Subject,
-		Message: msgRequest.Message,
+		Data:    msgRequest.Message,
 	}
 
 	err = app.Mailer.SendMessageSMTP(message)
